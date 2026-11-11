@@ -64,216 +64,113 @@
             border-top-left-radius: 18px;
             border-top-right-radius: 18px;
         }
-        .bg-glitter-star {
-            position: fixed; pointer-events: none; z-index: 1; opacity: 0.7; animation: bgSparkle 2.5s ease-in-out infinite alternate;
+        .glossy-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 2px solid #ffffff;
         }
-        @keyframes bgSparkle { 0% { transform: scale(0.7) rotate(0deg); opacity: 0.3; } 100% { transform: scale(1.3) rotate(25deg); opacity: 1; } }
-        .cursor-trail-emoji {
-            position: fixed; pointer-events: none; font-size: 24px; z-index: 9999; transform: translate(-50%, -50%);
-            animation: emojiTrailAnim 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
-        @keyframes emojiTrailAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(0deg); } 100% { opacity: 0; transform: translate(-50%, 20px) scale(0.3) rotate(45deg); } }
-        #glitter-overlay {
-            position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
-            background: radial-gradient(circle, #FF5D05 0%, #EA1A85 60%, #950650 100%); display: flex; align-items: center; justify-content: center;
-        }
-        #glitter-overlay.active { opacity: 1; pointer-events: auto; }
-        .lipstick-mode-active { cursor: crosshair !important; touch-action: none; }
-        .glossy-card { background: linear-gradient(145deg, #ffffff 0%, #fff5f8 100%); border: 3px solid #950650; position: relative; }
     </style>
 </head>
-<body class="bg-sagBg text-white font-sans min-h-screen flex flex-col relative selection:bg-sagHeader selection:text-white">
+<body class="scrapbook-paper min-h-screen text-sagDark font-sans pb-16">
 
-    <div class="bg-glitter-star text-yellow-200 text-2xl" style="top: 8%; left: 4%;">✨</div>
-    <div class="bg-glitter-star text-pink-200 text-3xl" style="top: 18%; right: 6%;">💖</div>
-    <div class="bg-glitter-star text-yellow-300 text-xl" style="top: 40%; left: 7%;">⭐</div>
-    <div class="bg-glitter-star text-white text-2xl" style="top: 70%; right: 10%;">💫</div>
+    <!-- Header Banner -->
+    <header class="y2k-header-bg text-white py-8 px-4 border-b-4 border-sagAccent text-center">
+        <div class="max-w-4xl mx-auto space-y-2">
+            <h1 class="font-signature text-5xl md:text-7xl text-yellow-200 drop-shadow-[3px_3px_0px_#4A0227]">I'm a Sag.</h1>
+            <p class="font-editorial italic text-lg md:text-xl text-pink-100">Dispatches from a recovering gifted child navigating the chaos.</p>
+            
+            <!-- Navigation Tabs -->
+            <div class="flex justify-center items-center gap-3 pt-4">
+                <button onclick="switchTab('blogs')" id="nav-blogs-btn" class="bg-white text-sagAccent font-bold px-5 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-book-open"></i> Dispatches
+                </button>
+                <button onclick="switchTab('thoughts')" id="nav-thoughts-btn" class="bg-sagDark/70 text-yellow-200 font-bold px-5 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-comment-dots"></i> Stream of Consciousness
+                </button>
+            </div>
+        </div>
+    </header>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-20 right-6 z-50 transform translate-x-full transition-transform duration-300 bg-white border-4 border-sagAccent text-sagDark px-5 py-3 rounded-2xl y2k-shadow flex items-center gap-3">
-        <span id="toast-title" class="font-bold text-sagHeader text-sm">Notification</span>
-        <span id="toast-msg" class="text-xs font-semibold">Message here</span>
-    </div>
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 mt-8">
 
-    <!-- Loading Screen Portal -->
-    <div id="glitter-overlay">
-        <div class="relative flex items-center justify-center">
-            <div class="text-8xl animate-spin">🪩</div>
-            <div class="absolute text-5xl animate-ping text-yellow-200">✨</div>
+        <!-- Home View (Blog List) -->
+        <div id="home-view" class="space-y-6">
+            
+            <!-- Search & Filters Toolbar -->
+            <div class="cyber-window p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="relative w-full md:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-sagDark/60 text-xs"></i>
+                    <input type="text" oninput="handleSearch(this.value)" placeholder="Search dispatches..." class="w-full pl-9 pr-4 py-2 rounded-full text-xs bg-white/90 text-sagDark font-semibold focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                </div>
+                
+                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+                    <button onclick="setFilter('latest')" id="filter-latest" class="bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm">Latest ✨</button>
+                    <button onclick="setFilter('popular')" id="filter-popular" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">Popular 🔥</button>
+                    <button onclick="setFilter('saved')" id="filter-saved" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">Saves 🔖</button>
+                    <button onclick="toggleLayoutView()" class="bg-white/90 text-sagAccent p-2 rounded-full text-xs font-bold y2k-shadow-sm hover:scale-110 transition-transform ml-auto">
+                        <i id="layout-icon" class="fa-solid fa-border-all"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Articles Feed Container -->
+            <div id="articles-container" class="space-y-6">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- Thoughts View (Micro-blog stream) -->
+        <div id="thoughts-view" class="hidden space-y-6">
+            <div class="cyber-window p-6 text-white space-y-4">
+                <h2 class="font-editorial text-2xl font-bold text-yellow-200">Midnight Stream of Consciousness 💭</h2>
+                <p class="text-xs text-pink-100">Unfiltered thoughts, late-night epiphanies, and random mental screenshots.</p>
+            </div>
+            <div id="thoughts-container" class="space-y-4">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+
+        <!-- Article Detail View -->
+        <div id="detail-view" class="hidden space-y-6">
+            <button onclick="showHome()" class="bg-white text-sagAccent px-4 py-2 rounded-full text-xs font-bold y2k-shadow-sm hover:scale-105 transition-transform flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left"></i> Back to Dispatches
+            </button>
+
+            <article id="article-content-box" class="glossy-card p-6 md:p-10 rounded-3xl y2k-shadow space-y-6">
+                <!-- Populated dynamically -->
+            </article>
+        </div>
+
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="fixed bottom-5 right-5 bg-sagDark text-white px-5 py-3 rounded-2xl y2k-shadow-sm transform translate-y-24 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 border border-pink-400">
+        <i class="fa-solid fa-sparkles text-yellow-300 text-lg"></i>
+        <div>
+            <p id="toast-title" class="text-xs font-bold text-yellow-200"></p>
+            <p id="toast-desc" class="text-[11px] text-pink-100"></p>
         </div>
     </div>
 
-    <div class="flex-grow flex flex-col z-10">
-        <!-- Header -->
-        <header class="y2k-header-bg border-b-4 border-sagAccent py-6 px-4 md:px-12 sticky top-0 z-40">
-            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-                <a href="#" onclick="showHome(); return false;" class="group flex flex-col items-center sm:items-start text-center sm:text-left">
-                    <h1 class="font-signature text-6xl md:text-7xl text-white drop-shadow-[4px_4px_0px_#950650] group-hover:scale-105 transition-transform tracking-wide leading-none">
-                        I'm a Sag.
-                    </h1>
-                    <span class="text-xs md:text-sm font-bold text-yellow-200 tracking-widest uppercase mt-1.5 drop-shadow">
-                        Formerly Gifted Child
-                    </span>
-                </a>
-
-                <div class="flex items-center gap-2">
-                    <button onclick="switchTab('blogs')" id="nav-blogs-btn" class="bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md">
-                        <i class="fa-solid fa-book-open text-sagHeader"></i> Articles
-                    </button>
-                    <button onclick="switchTab('thoughts')" id="nav-thoughts-btn" class="bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5">
-                        <i class="fa-solid fa-note-sticky text-yellow-300"></i> Notes
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
-            <!-- Home Feed -->
-            <div id="home-view" class="space-y-6">
-                <div class="cyber-window p-2 y2k-shadow">
-                    <div class="cyber-window-header flex items-center justify-between text-white text-xs font-bold">
-                        <span class="flex items-center gap-2"><span>★</span> MY JOURNAL DISPATCHES <span>★</span></span>
-                        <div class="flex gap-1.5">
-                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-300 inline-block"></span>
-                            <span class="w-2.5 h-2.5 rounded-full bg-pink-300 inline-block"></span>
-                        </div>
-                    </div>
-                    <div class="p-3 bg-sagDark/80 rounded-b-xl flex flex-col md:flex-row items-center justify-between gap-3">
-                        <div class="relative w-full md:w-72">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-pink-300 text-xs"></i>
-                            <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search articles..." 
-                                class="w-full bg-sagDark border border-pink-300/40 text-white placeholder-pink-200/60 pl-9 pr-4 py-2 rounded-full text-xs focus:outline-none focus:border-yellow-300">
-                        </div>
-
-                        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                            <button onclick="toggleLayoutView()" id="layout-toggle-btn" class="bg-sagDark/80 text-yellow-200 border border-yellow-300/40 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark flex items-center gap-1.5" title="Toggle Layout">
-                                <i id="layout-icon" class="fa-solid fa-border-all"></i> <span id="layout-text">Grid View</span>
-                            </button>
-                            <button onclick="setFilter('latest')" id="filter-latest" class="bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm">
-                                Latest ✨
-                            </button>
-                            <button onclick="setFilter('popular')" id="filter-popular" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">
-                                Most Liked 🔥
-                            </button>
-                            <button onclick="setFilter('saved')" id="filter-saved" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">
-                                Saved 🔖
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="articles-container" class="space-y-6"></div>
-            </div>
-
-            <!-- Notes Feed -->
-            <div id="thoughts-view" class="hidden space-y-6">
-                <div class="cyber-window p-2 y2k-shadow">
-                    <div class="cyber-window-header flex items-center justify-between text-white text-xs font-bold">
-                        <span>Short Notes & Updates ✨</span>
-                        <div class="flex gap-1"><span class="text-sm">💖</span><span class="text-sm">🎀</span></div>
-                    </div>
-                </div>
-                <div id="thoughts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <!-- Article Detail & Supabase Comments View -->
-            <div id="detail-view" class="hidden space-y-6">
-                <div class="flex items-center justify-between">
-                    <button onclick="showHome()" class="bg-sagAccent text-white px-4 py-2 rounded-xl text-sm font-bold y2k-shadow-sm hover:bg-pink-900 transition-all inline-flex items-center gap-2">
-                        <i class="fa-solid fa-arrow-left"></i> Back to Dispatches
-                    </button>
-
-                    <div class="relative">
-                        <button id="lipstick-toggle-btn" onclick="toggleLipstickMenu()" class="bg-white text-sagAccent border-2 border-pink-300 p-2.5 rounded-full font-bold text-xs hover:scale-110 transition-all shadow-md flex items-center gap-1.5" title="Lipstick Highlighter">
-                            <span class="text-base">💄</span>
-                        </button>
-                        <div id="lipstick-menu" class="hidden absolute right-0 mt-2 bg-white border-2 border-pink-300 p-3 rounded-2xl shadow-xl z-30 space-y-2.5 w-48">
-                            <div class="text-[10px] font-bold text-sagAccent uppercase tracking-wider text-center">Lipstick Shade</div>
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="setLipstickColor('#dc143c')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                                <button onclick="setLipstickColor('#ff1493')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                                <button onclick="setLipstickColor('#ff4500')" class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                            </div>
-                            <button onclick="toggleLipstickTool()" id="lipstick-mode-btn" class="w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200">
-                                Start Highlighting 💄
-                            </button>
-                            <button onclick="clearLipstickDrawings()" class="w-full text-[10px] font-bold text-gray-500 underline text-center block hover:text-sagHeader">Clear Marks</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-6">
-                    <div id="article-detail-card" class="glossy-card scrapbook-paper p-6 md:p-10 text-sagDark rounded-3xl relative overflow-hidden y2k-shadow border-4 border-sagAccent min-h-[400px]">
-                        <canvas id="lipstick-canvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
-                        <article id="active-article" class="relative z-10 space-y-4"></article>
-                    </div>
-
-                    <!-- Supabase Live Engagement Section -->
-                    <div class="glossy-card p-6 rounded-3xl y2k-shadow space-y-6">
-                        <div class="flex items-center justify-between border-b border-pink-200 pb-4">
-                            <h3 class="font-bold text-lg text-sagAccent flex items-center gap-2">
-                                <i class="fa-solid fa-comments"></i> Reader Thoughts & Comments
-                            </h3>
-                            <button id="like-btn" onclick="handleLike()" class="bg-sagHeader text-white px-4 py-2 rounded-full text-xs font-bold y2k-shadow-sm flex items-center gap-2 hover:scale-105 transition-all">
-                                <i class="fa-solid fa-heart"></i> <span id="like-count">0</span> Likes
-                            </button>
-                        </div>
-
-                        <!-- Add Comment Form -->
-                        <form onsubmit="postComment(event)" class="space-y-3">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" id="comment-author" placeholder="Your Name / Handle" required 
-                                    class="bg-white border-2 border-pink-300 text-sagDark placeholder-gray-400 px-4 py-2 rounded-xl text-xs focus:outline-none focus:border-sagHeader">
-                            </div>
-                            <textarea id="comment-content" placeholder="Leave a sweet note..." rows="3" required
-                                class="w-full bg-white border-2 border-pink-300 text-sagDark placeholder-gray-400 p-3 rounded-xl text-xs focus:outline-none focus:border-sagHeader resize-none"></textarea>
-                            <button type="submit" class="bg-sagAccent text-white px-5 py-2 rounded-xl text-xs font-bold y2k-shadow-sm hover:bg-pink-900 transition-all">
-                                Post Comment ✨
-                            </button>
-                        </form>
-
-                        <!-- Comments List Container -->
-                        <div id="comments-list" class="space-y-3 pt-2">
-                            <p class="text-xs text-gray-500 italic">Loading comments...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <footer class="bg-sagDark border-t-4 border-sagAccent py-8 px-4 text-center mt-auto">
-            <div class="max-w-4xl mx-auto space-y-3">
-                <p class="font-bold text-yellow-200 text-sm tracking-wide">
-                    I'M A SAG. • FORMERLY GIFTED CHILD ✨
-                </p>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Script Application Logic -->
+    <!-- JavaScript Application Logic -->
     <script>
-        // ==========================================
-        // PASTE YOUR SUPABASE CREDENTIALS HERE
-        // ==========================================
+        // --- SUPABASE CONFIGURATION ---
         const SUPABASE_URL = 'https://erfvnuwaefkzopgnqhnq.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_ImRfcXmiHZQJVyMegoxglg_r8Blqrnn';
+        
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        let searchQuery = '';
-        let currentFilter = 'latest';
+        // --- STATE MANAGEMENT ---
         let isGridView = false;
-        let isLipstickActive = false;
-        let lipstickColor = '#dc143c';
-        let isDrawing = false;
-        let canvas = null;
-        let ctx = null;
+        let currentFilter = 'latest';
+        let searchQuery = '';
         let activeArticleId = null;
+        
+        // Private local storage bookmarks
+        let savedBookmarks = JSON.parse(localStorage.getItem('sag_bookmarks') || '{}');
 
-        // ==========================================
-        // EDIT YOUR ARTICLES HERE OR DELETE THEM
-        // ==========================================
+        // Articles Dataset
         let articlesData = [
             {
                 id: 'article-1',
@@ -281,7 +178,6 @@
                 snippet: "A deep dive into why we overshare, wander endlessly, and always find our way back to ourselves.",
                 date: "Oct 24",
                 image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
-                isSaved: false,
                 content: "Being a Sagittarius isn't just an astrological sign—it's a full lifestyle experience. We roam, we question, and most importantly, we tell the truth even when it's uncomfortable.\n\nGrowing up as a 'gifted child' comes with a very specific burden: the expectation that you already have life figured out. But the real magic happens when you let go of perfectionism and lean into pure curiosity."
             },
             {
@@ -290,73 +186,35 @@
                 snippet: "How to stop seeking validation and start living for the chaos and beauty of right now.",
                 date: "Oct 18",
                 image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-                isSaved: true,
                 content: "When everyone spent your childhood telling you how 'smart' you were, failure starts feeling like an existential threat. Here is how I am romanticizing my mistakes and embracing being a beginner again."
             }
         ];
 
         let thoughtsData = [
-            {
-                id: 1,
-                text: "Romanticizing my afternoon coffee because small rituals keep us sane ☕✨",
-                author: "Formerly Gifted Child",
-                date: "Today"
-            },
-            {
-                id: 2,
-                text: "Current mood: listening to 2000s pop nostalgia on loop 🎧",
-                author: "Formerly Gifted Child",
-                date: "Yesterday"
-            }
+            { id: 1, author: "Sag Thoughts", date: "Yesterday", text: "Burnout isn't a badge of honor, it's just your nervous system begging you to go touch grass." },
+            { id: 2, author: "Sag Thoughts", date: "3 days ago", text: "Changing your mind is not inconsistency. It's called upgrading your firmware." }
         ];
 
-        function triggerGlitterPortal(callback) {
-            const overlay = document.getElementById('glitter-overlay');
-            if (!overlay) { if (callback) callback(); return; }
-            overlay.classList.add('active');
-            setTimeout(() => {
-                if (callback) callback();
-                setTimeout(() => { overlay.classList.remove('active'); }, 200);
-            }, 300);
+        function isArticleSaved(id) {
+            return !!savedBookmarks[id];
         }
 
-        function showNotification(title, msg) {
-            const toast = document.getElementById('toast');
+        function showNotification(title, desc) {
+            const toast = document.getElementById('notification-toast');
             document.getElementById('toast-title').innerText = title;
-            document.getElementById('toast-msg').innerText = msg;
-            toast.classList.remove('translate-x-full');
-            setTimeout(() => { toast.classList.add('translate-x-full'); }, 4500);
+            document.getElementById('toast-desc').innerText = desc;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
         }
 
-        function toggleLipstickMenu() {
-            document.getElementById('lipstick-menu').classList.toggle('hidden');
-        }
-
-        const trailEmojis = ['✨', '⭐', '💖', '💫', '💅', '🎀', '🌸'];
-        let lastTrailTime = 0;
-        document.addEventListener('mousemove', (e) => {
-            const now = Date.now();
-            if (now - lastTrailTime > 60) {
-                lastTrailTime = now;
-                const el = document.createElement('div');
-                el.className = 'cursor-trail-emoji';
-                el.innerText = trailEmojis[Math.floor(Math.random() * trailEmojis.length)];
-                el.style.left = `${e.clientX}px`;
-                el.style.top = `${e.clientY}px`;
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 850);
-            }
-        });
-
-        function toggleLayoutView() {
-            isGridView = !isGridView;
-            const icon = document.getElementById('layout-icon');
-            const text = document.getElementById('layout-text');
-            if (isGridView) {
-                icon.className = "fa-solid fa-list"; text.innerText = "List View";
-            } else {
-                icon.className = "fa-solid fa-border-all"; text.innerText = "Grid View";
-            }
+        function toggleBookmark(id) {
+            savedBookmarks[id] = !savedBookmarks[id];
+            localStorage.setItem('sag_bookmarks', JSON.stringify(savedBookmarks));
+            
+            const isNowSaved = savedBookmarks[id];
+            showNotification(isNowSaved ? "Saved! 🔖" : "Unsaved", isNowSaved ? "Added to your private saves." : "Removed from your saves.");
             renderArticles();
         }
 
@@ -370,15 +228,36 @@
             detailView.classList.add('hidden');
             if (tabName === 'blogs') {
                 homeView.classList.remove('hidden'); thoughtsView.classList.add('hidden');
-                blogsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
-                thoughtsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+                blogsBtn.className = "bg-white text-sagAccent font-bold px-5 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
+                thoughtsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-5 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
             } else if (tabName === 'thoughts') {
                 homeView.classList.add('hidden'); thoughtsView.classList.remove('hidden');
-                thoughtsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
-                blogsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+                thoughtsBtn.className = "bg-white text-sagAccent font-bold px-5 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
+                blogsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-5 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+                renderThoughts();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        function toggleLayoutView() {
+            isGridView = !isGridView;
+            const icon = document.getElementById('layout-icon');
+            icon.className = isGridView ? "fa-solid fa-list" : "fa-solid fa-border-all";
+            renderArticles();
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['latest', 'popular', 'saved'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if(btn) {
+                    btn.className = (f === filter) ? "bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm" : "bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark";
+                }
+            });
+            renderArticles();
+        }
+
+        function handleSearch(val) { searchQuery = val; renderArticles(); }
 
         function renderArticles() {
             const container = document.getElementById('articles-container');
@@ -391,10 +270,10 @@
                 a.snippet.toLowerCase().includes(searchQuery.toLowerCase())
             );
 
-            if (currentFilter === 'saved') filtered = filtered.filter(a => a.isSaved);
+            if (currentFilter === 'saved') filtered = filtered.filter(a => isArticleSaved(a.id));
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="glossy-card p-8 rounded-3xl text-center text-sagDark y2k-shadow col-span-full"><p class="font-bold text-lg">No articles match your search! ✨</p></div>`;
+                container.innerHTML = `<div class="glossy-card p-8 rounded-3xl text-center text-sagDark y2k-shadow col-span-full"><p class="font-bold text-lg">No dispatches match your filter! ✨</p></div>`;
                 return;
             }
 
@@ -406,7 +285,7 @@
                         <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
                             <span>${article.date}</span>
                             <button onclick="toggleBookmark('${article.id}')" class="hover:scale-125 transition-transform text-sagAccent">
-                                <i class="${article.isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark text-base"></i>
+                                <i class="${isArticleSaved(article.id) ? 'fa-solid' : 'fa-regular'} fa-bookmark text-base"></i>
                             </button>
                         </div>
                         <div onclick="openArticleDetail('${article.id}')" class="cursor-pointer space-y-2 group">
@@ -442,229 +321,171 @@
         }
 
         async function openArticleDetail(id) {
-            triggerGlitterPortal(async () => {
-                const article = articlesData.find(a => a.id === id);
-                if (!article) return;
-                activeArticleId = id;
+            const article = articlesData.find(a => a.id === id);
+            if (!article) return;
+            activeArticleId = id;
 
-                document.getElementById('home-view').classList.add('hidden');
-                document.getElementById('thoughts-view').classList.add('hidden');
-                document.getElementById('detail-view').classList.remove('hidden');
-
-                document.getElementById('active-article').innerHTML = `
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
-                            <span>${article.date}</span>
-                            <span class="bg-pink-100 text-sagAccent px-3 py-1 rounded-full border border-pink-200">Dispatch</span>
-                        </div>
-                        <h1 class="font-editorial text-3xl md:text-5xl font-bold text-sagDark leading-tight">${article.title}</h1>
-                    </div>
-                    ${article.image ? `<img src="${article.image}" class="w-full max-h-96 object-cover rounded-2xl border-2 border-pink-200 shadow-sm my-4">` : ''}
-                    <div class="text-sm md:text-base text-gray-800 leading-relaxed space-y-4 font-sans pt-4 whitespace-pre-line">${article.content}</div>
-                `;
-
-                await fetchLikes();
-                await fetchComments();
-                setTimeout(initLipstickCanvas, 150);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-
-        function showHome() {
-            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('home-view').classList.add('hidden');
             document.getElementById('thoughts-view').classList.add('hidden');
-            document.getElementById('detail-view').classList.add('hidden');
+            const detailView = document.getElementById('detail-view');
+            detailView.classList.remove('hidden');
+
+            const contentBox = document.getElementById('article-content-box');
+            contentBox.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
+                        <span>${article.date}</span>
+                        <button onclick="toggleBookmark('${article.id}')" class="hover:scale-125 transition-transform text-sagAccent text-lg">
+                            <i class="${isArticleSaved(article.id) ? 'fa-solid' : 'fa-regular'} fa-bookmark"></i>
+                        </button>
+                    </div>
+                    <h1 class="font-editorial text-2xl md:text-4xl font-bold text-sagDark">${article.title}</h1>
+                    ${article.image ? `<div class="rounded-2xl overflow-hidden border-2 border-pink-200"><img src="${article.image}" class="w-full h-64 object-cover"></div>` : ''}
+                    <div class="prose text-sm text-gray-800 leading-relaxed whitespace-pre-line font-normal pt-2">${article.content}</div>
+                </div>
+
+                <!-- Engagement Section (Supabase Likes & Comments) -->
+                <div class="border-t border-pink-200 pt-6 mt-8 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <button onclick="handleLike()" class="bg-pink-100 hover:bg-pink-200 text-sagAccent font-bold px-4 py-2 rounded-full text-xs flex items-center gap-2 transition-all y2k-shadow-sm">
+                            <i class="fa-solid fa-heart text-red-500"></i> <span id="like-count">0</span> Likes
+                        </button>
+                    </div>
+
+                    <!-- Comments Area -->
+                    <div class="space-y-4 pt-4">
+                        <h3 class="font-bold text-sm text-sagDark">Leave a Note ✨</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="comment-author" placeholder="Your name or handle" class="w-full px-4 py-2 rounded-xl text-xs bg-pink-50/50 border border-pink-200 focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                            <textarea id="comment-content" rows="3" placeholder="Write your thoughts..." class="w-full px-4 py-2 rounded-xl text-xs bg-pink-50/50 border border-pink-200 focus:outline-none focus:ring-2 focus:ring-yellow-300"></textarea>
+                            <button onclick="postComment()" class="bg-sagHeader text-white font-bold px-5 py-2 rounded-xl text-xs y2k-shadow-sm hover:brightness-110">Post Comment 🚀</button>
+                        </div>
+
+                        <div id="comments-list" class="space-y-3 pt-4">
+                            <p class="text-xs text-gray-500 italic">Loading notes...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            await fetchLikes();
+            await fetchComments();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function setFilter(filter) {
-            currentFilter = filter;
-            ['latest', 'popular', 'saved'].forEach(f => {
-                const btn = document.getElementById(`filter-${f}`);
-                if(btn) {
-                    btn.className = (f === filter) ? "bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm" : "bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark";
-                }
-            });
-            renderArticles();
-        }
-
-        function handleSearch(val) { searchQuery = val; renderArticles(); }
-
-        function toggleBookmark(id) {
-            const article = articlesData.find(a => a.id === id);
-            if (article) {
-                article.isSaved = !article.isSaved;
-                showNotification(article.isSaved ? "Saved! 🔖" : "Unsaved", article.isSaved ? "Added to saved dispatches." : "Removed.");
-                renderArticles();
-            }
-        }
-
-        // --- SUPABASE DATABASE FUNCTIONS ---
+        // --- SUPABASE API CALLS ---
         async function fetchLikes() {
             try {
-                let { data, error } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
-                document.getElementById('like-count').innerText = data ? data.likes_count : 0;
+                const { data, error } = await _supabase
+                    .from('article_likes')
+                    .select('likes_count')
+                    .eq('article_id', activeArticleId)
+                    .single();
+                
+                if (data) {
+                    document.getElementById('like-count').innerText = data.likes_count || 0;
+                } else {
+                    document.getElementById('like-count').innerText = 0;
+                }
             } catch (err) {
-                document.getElementById('like-count').innerText = 0;
+                console.error("Error fetching likes:", err);
             }
         }
 
         async function handleLike() {
             try {
-                let { data } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
-                let newCount = data ? data.likes_count + 1 : 1;
+                const countEl = document.getElementById('like-count');
+                let currentLikes = parseInt(countEl.innerText) || 0;
+                currentLikes++;
+                countEl.innerText = currentLikes;
+
+                // Upsert to Supabase
+                await _supabase
+                    .from('article_likes')
+                    .upsert({ article_id: activeArticleId, likes_count: currentLikes }, { onConflict: 'article_id' });
                 
-                await supabaseClient.from('article_likes').upsert({ article_id: activeArticleId, likes_count: newCount }, { onConflict: 'article_id' });
-                document.getElementById('like-count').innerText = newCount;
-                showNotification("Liked! ❤️", "Thanks for spreading love.");
+                showNotification("Liked! ❤️", "Thanks for showing love.");
             } catch (err) {
-                showNotification("Error", "Could not record like.");
+                console.error("Error updating like:", err);
             }
         }
 
         async function fetchComments() {
-            const listContainer = document.getElementById('comments-list');
-            listContainer.innerHTML = '<p class="text-xs text-gray-500 italic">Loading comments...</p>';
-
             try {
-                let { data, error } = await supabaseClient.from('article_comments').select('*').eq('article_id', activeArticleId).order('created_at', { ascending: false });
-                
+                const { data, error } = await _supabase
+                    .from('article_comments')
+                    .select('*')
+                    .eq('article_id', activeArticleId)
+                    .order('created_at', { ascending: false });
+
+                const listEl = document.getElementById('comments-list');
                 if (!data || data.length === 0) {
-                    listContainer.innerHTML = '<p class="text-xs text-gray-500 italic">No comments yet. Be the first to leave one! ✨</p>';
+                    listEl.innerHTML = `<p class="text-xs text-gray-500 italic">No notes yet. Be the first to leave one!</p>`;
                     return;
                 }
 
-                listContainer.innerHTML = '';
-                data.forEach(c => {
-                    const item = document.createElement('div');
-                    item.className = "bg-white border-2 border-pink-200 p-3 rounded-2xl text-xs space-y-1 relative shadow-sm";
-                    item.innerHTML = `
-                        <div class="flex justify-between items-center font-bold text-sagAccent">
-                            <span>${escapeHtml(c.author)}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[10px] text-gray-400 font-normal">${new Date(c.created_at).toLocaleDateString()}</span>
-                                <button onclick="deleteComment(${c.id})" class="text-red-400 hover:text-red-600 transition-colors" title="Delete Comment">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </button>
-                            </div>
+                listEl.innerHTML = data.map(c => `
+                    <div class="bg-white/80 p-3.5 rounded-2xl border border-pink-100 flex justify-between items-start gap-3">
+                        <div class="space-y-1">
+                            <p class="text-xs font-bold text-sagAccent">${escapeHtml(c.author || 'Anonymous')}</p>
+                            <p class="text-xs text-gray-800">${escapeHtml(c.content)}</p>
                         </div>
-                        <p class="text-gray-800 leading-relaxed pt-1">${escapeHtml(c.content)}</p>
-                    `;
-                    listContainer.appendChild(item);
-                });
+                        <button onclick="deleteComment('${c.id}')" class="text-gray-400 hover:text-red-500 text-xs px-1.5 py-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `).join('');
             } catch (err) {
-                listContainer.innerHTML = '<p class="text-xs text-red-500">Failed to load comments.</p>';
+                console.error("Error fetching comments:", err);
             }
         }
 
-        async function postComment(e) {
-            e.preventDefault();
-            const author = document.getElementById('comment-author').value.trim();
+        async function postComment() {
+            const author = document.getElementById('comment-author').value.trim() || 'Anonymous';
             const content = document.getElementById('comment-content').value.trim();
 
-            if (!author || !content) return;
+            if (!content) {
+                showNotification("Oops!", "Please write something before posting.");
+                return;
+            }
 
             try {
-                const { error } = await supabaseClient.from('article_comments').insert([{ article_id: activeArticleId, author, content }]);
+                const { error } = await _supabase
+                    .from('article_comments')
+                    .insert([{ article_id: activeArticleId, author, content }]);
+
                 if (error) throw error;
 
-                document.getElementById('comment-author').value = '';
                 document.getElementById('comment-content').value = '';
-                showNotification("Success! 💌", "Your comment was posted.");
-                fetchComments();
+                showNotification("Posted! 💌", "Your note is now live.");
+                await fetchComments();
             } catch (err) {
-                showNotification("Error", "Could not post comment.");
+                console.error("Error posting comment:", err);
+                showNotification("Error", "Could not post comment. Check Supabase RLS policies.");
             }
         }
 
-        async function deleteComment(commentId) {
-            if (!confirm("Are you sure you want to delete this comment?")) return;
-
+        async function deleteComment(id) {
             try {
-                const { error } = await supabaseClient.from('article_comments').delete().eq('id', commentId);
+                const { error } = await _supabase
+                    .from('article_comments')
+                    .delete()
+                    .eq('id', id);
+
                 if (error) throw error;
-                showNotification("Deleted", "Comment removed.");
-                fetchComments();
+                showNotification("Deleted", "Note removed.");
+                await fetchComments();
             } catch (err) {
-                showNotification("Error", "Could not delete comment.");
+                console.error("Error deleting comment:", err);
             }
         }
 
-        function escapeHtml(text) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, m => map[m]);
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // Lipstick Canvas Highlighter Logic
-        function initLipstickCanvas() {
-            canvas = document.getElementById('lipstick-canvas');
-            if (!canvas) return;
-            const card = document.getElementById('article-detail-card');
-            canvas.width = card.clientWidth;
-            canvas.height = card.clientHeight;
-            ctx = canvas.getContext('2d');
-            
-            ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipstickColor; ctx.globalAlpha = 0.35;
-            canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
-
-            let lastX = 0, lastY = 0;
-            function startDraw(x, y) {
-                if (!isLipstickActive) return;
-                isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                lastX = x - rect.left; lastY = y - rect.top;
-            }
-            function moveDraw(x, y) {
-                if (!isDrawing || !isLipstickActive) return;
-                const rect = canvas.getBoundingClientRect();
-                const currentX = x - rect.left; const currentY = y - rect.top;
-                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(currentX, currentY); ctx.stroke();
-                lastX = currentX; lastY = currentY;
-            }
-
-            canvas.onmousedown = (e) => startDraw(e.clientX, e.clientY);
-            canvas.onmousemove = (e) => moveDraw(e.clientX, e.clientY);
-            canvas.onmouseup = () => isDrawing = false;
-            canvas.onmouseleave = () => isDrawing = false;
-
-            canvas.ontouchstart = (e) => { if (e.touches.length === 1) startDraw(e.touches[0].clientX, e.touches[0].clientY); };
-            canvas.ontouchmove = (e) => { if (e.touches.length === 1) { moveDraw(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } };
-            canvas.ontouchend = () => isDrawing = false;
-        }
-
-        function toggleLipstickTool() {
-            isLipstickActive = !isLipstickActive;
-            const modeBtn = document.getElementById('lipstick-mode-btn');
-            const card = document.getElementById('article-detail-card');
-            if (isLipstickActive) {
-                modeBtn.className = "w-full bg-sagHeader text-white border border-pink-400 py-1.5 px-2 rounded-xl text-[11px] font-bold shadow-sm";
-                modeBtn.innerText = "Highlighter Active 💄";
-                card.classList.add('lipstick-mode-active');
-            } else {
-                modeBtn.className = "w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200";
-                modeBtn.innerText = "Start Highlighting 💄";
-                card.classList.remove('lipstick-mode-active');
-            }
-            if (canvas) canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
-        }
-
-        function setLipstickColor(color) {
-            lipstickColor = color;
-            if (ctx) ctx.strokeStyle = lipstickColor;
-            showNotification("Shade Selected ✨", "Highlighting in new shade.");
-        }
-
-        function clearLipstickDrawings() {
-            if (ctx && canvas) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                showNotification("Marks Cleared", "Highlighter canvas reset.");
-            }
-        }
-
-        window.onload = function() {
-            renderArticles();
-            renderThoughts();
-        };
+        // Initial load
+        renderArticles();
     </script>
 </body>
 </html>
