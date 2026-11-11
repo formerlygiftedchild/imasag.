@@ -271,7 +271,7 @@
         let ctx = null;
         let activeArticleId = null;
 
-     // ==========================================
+   // ==========================================
         // EDIT YOUR ARTICLES HERE OR DELETE THEM
         // ==========================================
         let savedBookmarks = JSON.parse(localStorage.getItem('sag_bookmarks') || '{}');
@@ -309,6 +309,9 @@
                 date: "Yesterday"
             }
         ];
+
+        // Store fetched like counts globally so Popular sorting works instantly
+        let articleLikesMap = {};
 
         function isArticleSaved(id) {
             return !!savedBookmarks[id];
@@ -399,6 +402,9 @@
 
             if (currentFilter === 'saved') {
                 filtered = filtered.filter(a => isArticleSaved(a.id));
+            } else if (currentFilter === 'popular') {
+                // Sort articles so the one with the highest likes comes first
+                filtered.sort((a, b) => (articleLikesMap[b.id] || 0) - (articleLikesMap[a.id] || 0));
             }
 
             if (filtered.length === 0) {
@@ -461,6 +467,11 @@
                 document.getElementById('detail-view').classList.remove('hidden');
 
                 document.getElementById('active-article').innerHTML = `
+                    <!-- FLOATING HIGHLIGHTER TOGGLE (Stays fixed in top-right while scrolling) -->
+                    <button onclick="toggleLipstickTool()" id="lipstick-mode-btn" class="fixed top-24 right-4 z-50 bg-pink-100 text-sagAccent border-2 border-pink-300 py-2 px-3 rounded-full text-xs font-bold shadow-xl hover:bg-pink-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-paintbrush"></i> <span id="lipstick-btn-text">Highlight 💄</span>
+                    </button>
+
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
                             <span>${article.date}</span>
@@ -470,29 +481,20 @@
                     </div>
                     ${article.image ? `<img src="${article.image}" class="w-full max-h-96 object-cover rounded-2xl border-2 border-pink-200 shadow-sm my-4">` : ''}
                     <div class="text-sm md:text-base text-gray-800 leading-relaxed space-y-4 font-sans pt-4 whitespace-pre-line">${article.content}</div>
-                    
-                    <!-- Star Rating Engagement Section -->
-                    <div class="border-t border-pink-200 pt-6 mt-8 space-y-4">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                            <div>
-                                <h3 class="font-bold text-sm text-sagDark">Rate this Dispatch ⭐</h3>
-                                <p class="text-[11px] text-gray-600">Give up to 5 stars from your device.</p>
-                            </div>
-                            <div id="star-rating-container" class="flex items-center gap-1.5 text-xl text-yellow-400"></div>
-                        </div>
-                        <p id="user-rating-status" class="text-xs text-sagAccent font-semibold italic"></p>
-                    </div>
                 `;
 
                 await fetchLikes();
                 await fetchComments();
-                await fetchArticleRating();
                 setTimeout(initLipstickCanvas, 150);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             });
         }
 
         function showHome() {
+            // Remove floating highlighter button when leaving detail view
+            const floatingBtn = document.getElementById('lipstick-mode-btn');
+            if (floatingBtn) floatingBtn.remove();
+
             document.getElementById('home-view').classList.remove('hidden');
             document.getElementById('thoughts-view').classList.add('hidden');
             document.getElementById('detail-view').classList.add('hidden');
@@ -521,72 +523,45 @@
             renderArticles();
         }
 
-        // --- STAR RATING LOGIC ---
-        async function fetchArticleRating() {
-            const container = document.getElementById('star-rating-container');
-            const statusEl = document.getElementById('user-rating-status');
-            if (!container) return;
-
-            const userRatingKey = `rated_${activeArticleId}`;
-            const existingRating = localStorage.getItem(userRatingKey);
-
-            container.innerHTML = '';
-            for (let i = 1; i <= 5; i++) {
-                const star = document.createElement('button');
-                star.className = "hover:scale-125 transition-transform focus:outline-none";
-                star.innerHTML = `<i class="${existingRating && i <= existingRating ? 'fa-solid' : 'fa-regular'} fa-star"></i>`;
-                
-                if (!existingRating) {
-                    star.onclick = () => submitRating(i);
-                }
-                container.appendChild(star);
-            }
-
-            if (existingRating) {
-                statusEl.innerText = `You rated this dispatch ${existingRating} star(s) from this device ✨`;
-            } else {
-                statusEl.innerText = "Click a star to cast your rating!";
-            }
-        }
-
-        async function submitRating(stars) {
-            const userRatingKey = `rated_${activeArticleId}`;
-            if (localStorage.getItem(userRatingKey)) {
-                showNotification("Already Rated", "You've already rated this dispatch!");
-                return;
-            }
-
-            try {
-                localStorage.setItem(userRatingKey, stars);
-                showNotification("Rated! ⭐", `Thanks for giving it ${stars} stars!`);
-                fetchArticleRating();
-            } catch (err) {
-                console.error("Error submitting rating:", err);
-                showNotification("Error", "Could not submit rating.");
-            }
-        }
-
         // --- SUPABASE DATABASE FUNCTIONS ---
         async function fetchLikes() {
             try {
                 let { data } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
+                const countVal = data ? data.likes_count : 0;
+                articleLikesMap[activeArticleId] = countVal; // Store for Popular sorting
+                
                 const countEl = document.getElementById('like-count');
-                if(countEl) countEl.innerText = data ? data.likes_count : 0;
+                if(countEl) countEl.innerText = countVal;
             } catch (err) {
                 const countEl = document.getElementById('like-count');
                 if(countEl) countEl.innerText = 0;
             }
         }
 
+        // Capped at max 5 likes per device
         async function handleLike() {
+            const likeKey = `likes_given_${activeArticleId}`;
+            let currentDeviceLikes = parseInt(localStorage.getItem(likeKey) || '0');
+
+            if (currentDeviceLikes >= 5) {
+                showNotification("Limit Reached ❤️", "You can give a maximum of 5 likes per article from this device!");
+                return;
+            }
+
             try {
                 let { data } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
                 let newCount = data ? data.likes_count + 1 : 1;
                 
                 await supabaseClient.from('article_likes').upsert({ article_id: activeArticleId, likes_count: newCount }, { onConflict: 'article_id' });
+                
+                currentDeviceLikes++;
+                localStorage.setItem(likeKey, currentDeviceLikes);
+                articleLikesMap[activeArticleId] = newCount;
+
                 const countEl = document.getElementById('like-count');
                 if(countEl) countEl.innerText = newCount;
-                showNotification("Liked! ❤️", "Thanks for spreading love.");
+                
+                showNotification("Liked! ❤️", `Like added! (${currentDeviceLikes}/5 given from this device)`);
             } catch (err) {
                 showNotification("Error", "Could not record like.");
             }
@@ -666,7 +641,7 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Lipstick Canvas Highlighter Logic (with mobile scroll fix)
+        // Lipstick Canvas Highlighter Logic (with Floating Button & Scroll Freedom)
         function initLipstickCanvas() {
             canvas = document.getElementById('lipstick-canvas');
             if (!canvas) return;
@@ -676,7 +651,7 @@
             ctx = canvas.getContext('2d');
             
             ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipstickColor; ctx.globalAlpha = 0.35;
-            canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
+            canvas.style.pointerEvents = 'none'; // Default to scrollable
 
             let lastX = 0, lastY = 0;
             function startDraw(x, y) {
@@ -705,19 +680,17 @@
 
         function toggleLipstickTool() {
             isLipstickActive = !isLipstickActive;
+            const btnText = document.getElementById('lipstick-btn-text');
             const modeBtn = document.getElementById('lipstick-mode-btn');
             const card = document.getElementById('article-detail-card');
+
             if (isLipstickActive) {
-                if(modeBtn) {
-                    modeBtn.className = "w-full bg-sagHeader text-white border border-pink-400 py-1.5 px-2 rounded-xl text-[11px] font-bold shadow-sm";
-                    modeBtn.innerText = "Highlighter Active 💄";
-                }
+                if(btnText) btnText.innerText = "Drawing Active 🖍️";
+                if(modeBtn) modeBtn.className = "fixed top-24 right-4 z-50 bg-sagHeader text-white border-2 border-pink-400 py-2 px-3 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5";
                 if(card) card.classList.add('lipstick-mode-active');
             } else {
-                if(modeBtn) {
-                    modeBtn.className = "w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200";
-                    modeBtn.innerText = "Start Highlighting 💄";
-                }
+                if(btnText) btnText.innerText = "Highlight 💄";
+                if(modeBtn) modeBtn.className = "fixed top-24 right-4 z-50 bg-pink-100 text-sagAccent border-2 border-pink-300 py-2 px-3 rounded-full text-xs font-bold shadow-xl hover:bg-pink-200 flex items-center gap-1.5";
                 if(card) card.classList.remove('lipstick-mode-active');
             }
             if (canvas) canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
