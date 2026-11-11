@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I'm a Sag. | Formerly Gifted Child</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Google Fonts for Editorial Y2K & Signature Heading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sagBg: '#EA1A85',     // Hot Pink / Magenta Background
+                        sagHeader: '#FF5D05', // Sunset Orange Banner Header
+                        sagAccent: '#950650', // Deep Berry Accent
+                        sagDark: '#4A0227',   // Deepest Burgundy Text
+                    },
+                    fontFamily: {
+                        signature: ['Great Vibes', 'cursive'],
+                        editorial: ['Playfair Display', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #EA1A85; }
+        ::-webkit-scrollbar-thumb { background: #950650; border-radius: 5px; border: 2px solid #FF5D05; }
+        .y2k-shadow { box-shadow: 8px 8px 0px #950650, 14px 14px 25px rgba(0,0,0,0.35); }
+        .y2k-shadow-sm { box-shadow: 4px 4px 0px #950650; }
+        .y2k-header-bg {
+            background: linear-gradient(135deg, #FF5D05 0%, #FF5D05 50%, #EA1A85 85%, #950650 100%);
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .scrapbook-paper {
+            background-color: #fffefb;
+            background-image: linear-gradient(90deg, rgba(234,26,133,0.06) 50%, transparent 50%), linear-gradient(rgba(234,26,133,0.06) 50%, transparent 50%);
+            background-size: 24px 24px;
+            position: relative;
+        }
+        .cyber-window {
+            background: linear-gradient(180deg, #ff85be 0%, #ea1a85 100%);
+            border: 4px solid #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(74, 2, 39, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+        }
+        .cyber-window-header {
+            background: linear-gradient(90deg, #FF5D05 0%, #EA1A85 100%);
+            border-bottom: 3px solid #950650;
+            padding: 8px 16px;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+        }
+        .bg-glitter-star {
+            position: fixed; pointer-events: none; z-index: 1; opacity: 0.7; animation: bgSparkle 2.5s ease-in-out infinite alternate;
+        }
+        @keyframes bgSparkle { 0% { transform: scale(0.7) rotate(0deg); opacity: 0.3; } 100% { transform: scale(1.3) rotate(25deg); opacity: 1; } }
+        .cursor-trail-emoji {
+            position: fixed; pointer-events: none; font-size: 24px; z-index: 9999; transform: translate(-50%, -50%);
+            animation: emojiTrailAnim 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes emojiTrailAnim { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(0deg); } 100% { opacity: 0; transform: translate(-50%, 20px) scale(0.3) rotate(45deg); } }
+        #glitter-overlay {
+            position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0; transition: opacity 0.3s ease;
+            background: radial-gradient(circle, #FF5D05 0%, #EA1A85 60%, #950650 100%); display: flex; align-items: center; justify-content: center;
+        }
+        #glitter-overlay.active { opacity: 1; pointer-events: auto; }
+        .lipstick-mode-active { cursor: crosshair !important; touch-action: none; }
+        .glossy-card { background: linear-gradient(145deg, #ffffff 0%, #fff5f8 100%); border: 3px solid #950650; position: relative; }
+    </style>
+</head>
+<body class="bg-sagBg text-white font-sans min-h-screen flex flex-col relative selection:bg-sagHeader selection:text-white">
+
+    <div class="bg-glitter-star text-yellow-200 text-2xl" style="top: 8%; left: 4%;">✨</div>
+    <div class="bg-glitter-star text-pink-200 text-3xl" style="top: 18%; right: 6%;">💖</div>
+    <div class="bg-glitter-star text-yellow-300 text-xl" style="top: 40%; left: 7%;">⭐</div>
+    <div class="bg-glitter-star text-white text-2xl" style="top: 70%; right: 10%;">💫</div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-6 z-50 transform translate-x-full transition-transform duration-300 bg-white border-4 border-sagAccent text-sagDark px-5 py-3 rounded-2xl y2k-shadow flex items-center gap-3">
+        <span id="toast-title" class="font-bold text-sagHeader text-sm">Notification</span>
+        <span id="toast-msg" class="text-xs font-semibold">Message here</span>
+    </div>
+
+    <!-- Loading Screen Portal -->
+    <div id="glitter-overlay">
+        <div class="relative flex items-center justify-center">
+            <div class="text-8xl animate-spin">🪩</div>
+            <div class="absolute text-5xl animate-ping text-yellow-200">✨</div>
+        </div>
+    </div>
+
+    <div class="flex-grow flex flex-col z-10">
+        <!-- Header -->
+        <header class="y2k-header-bg border-b-4 border-sagAccent py-6 px-4 md:px-12 sticky top-0 z-40">
+            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+                <a href="#" onclick="showHome(); return false;" class="group flex flex-col items-center sm:items-start text-center sm:text-left">
+                    <h1 class="font-signature text-6xl md:text-7xl text-white drop-shadow-[4px_4px_0px_#950650] group-hover:scale-105 transition-transform tracking-wide leading-none">
+                        I'm a Sag.
+                    </h1>
+                    <span class="text-xs md:text-sm font-bold text-yellow-200 tracking-widest uppercase mt-1.5 drop-shadow">
+                        Formerly Gifted Child
+                    </span>
+                </a>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="switchTab('blogs')" id="nav-blogs-btn" class="bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md">
+                        <i class="fa-solid fa-book-open text-sagHeader"></i> Articles
+                    </button>
+                    <button onclick="switchTab('thoughts')" id="nav-thoughts-btn" class="bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-note-sticky text-yellow-300"></i> Notes
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-4xl mx-auto px-4 py-6 w-full flex-grow">
+            <!-- Home Feed -->
+            <div id="home-view" class="space-y-6">
+                <div class="cyber-window p-2 y2k-shadow">
+                    <div class="cyber-window-header flex items-center justify-between text-white text-xs font-bold">
+                        <span class="flex items-center gap-2"><span>★</span> MY JOURNAL DISPATCHES <span>★</span></span>
+                        <div class="flex gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-300 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-pink-300 inline-block"></span>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-sagDark/80 rounded-b-xl flex flex-col md:flex-row items-center justify-between gap-3">
+                        <div class="relative w-full md:w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-pink-300 text-xs"></i>
+                            <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search articles..." 
+                                class="w-full bg-sagDark border border-pink-300/40 text-white placeholder-pink-200/60 pl-9 pr-4 py-2 rounded-full text-xs focus:outline-none focus:border-yellow-300">
+                        </div>
+
+                        <div class="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                            <button onclick="toggleLayoutView()" id="layout-toggle-btn" class="bg-sagDark/80 text-yellow-200 border border-yellow-300/40 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark flex items-center gap-1.5" title="Toggle Layout">
+                                <i id="layout-icon" class="fa-solid fa-border-all"></i> <span id="layout-text">Grid View</span>
+                            </button>
+                            <button onclick="setFilter('latest')" id="filter-latest" class="bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm">
+                                Latest ✨
+                            </button>
+                            <button onclick="setFilter('popular')" id="filter-popular" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">
+                                Most Liked 🔥
+                            </button>
+                            <button onclick="setFilter('saved')" id="filter-saved" class="bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark">
+                                Saved 🔖
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="articles-container" class="space-y-6"></div>
+            </div>
+
+            <!-- Notes Feed -->
+            <div id="thoughts-view" class="hidden space-y-6">
+                <div class="cyber-window p-2 y2k-shadow">
+                    <div class="cyber-window-header flex items-center justify-between text-white text-xs font-bold">
+                        <span>Short Notes & Updates ✨</span>
+                        <div class="flex gap-1"><span class="text-sm">💖</span><span class="text-sm">🎀</span></div>
+                    </div>
+                </div>
+                <div id="thoughts-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- Article Detail & Supabase Comments View -->
+            <div id="detail-view" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <button onclick="showHome()" class="bg-sagAccent text-white px-4 py-2 rounded-xl text-sm font-bold y2k-shadow-sm hover:bg-pink-900 transition-all inline-flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Back to Dispatches
+                    </button>
+
+                    <div class="relative">
+                        <button id="lipstick-toggle-btn" onclick="toggleLipstickMenu()" class="bg-white text-sagAccent border-2 border-pink-300 p-2.5 rounded-full font-bold text-xs hover:scale-110 transition-all shadow-md flex items-center gap-1.5" title="Lipstick Highlighter">
+                            <span class="text-base">💄</span>
+                        </button>
+                        <div id="lipstick-menu" class="hidden absolute right-0 mt-2 bg-white border-2 border-pink-300 p-3 rounded-2xl shadow-xl z-30 space-y-2.5 w-48">
+                            <div class="text-[10px] font-bold text-sagAccent uppercase tracking-wider text-center">Lipstick Shade</div>
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="setLipstickColor('#dc143c')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow hover:scale-125 transition-transform"></button>
+                                <button onclick="setLipstickColor('#ff1493')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
+                                <button onclick="setLipstickColor('#ff4500')" class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
+                            </div>
+                            <button onclick="toggleLipstickTool()" id="lipstick-mode-btn" class="w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200">
+                                Start Highlighting 💄
+                            </button>
+                            <button onclick="clearLipstickDrawings()" class="w-full text-[10px] font-bold text-gray-500 underline text-center block hover:text-sagHeader">Clear Marks</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div id="article-detail-card" class="glossy-card scrapbook-paper p-6 md:p-10 text-sagDark rounded-3xl relative overflow-hidden y2k-shadow border-4 border-sagAccent min-h-[400px]">
+                        <canvas id="lipstick-canvas" class="absolute inset-0 pointer-events-none z-20"></canvas>
+                        <article id="active-article" class="relative z-10 space-y-4"></article>
+                    </div>
+
+                    <!-- Supabase Live Engagement Section -->
+                    <div class="glossy-card p-6 rounded-3xl y2k-shadow space-y-6">
+                        <div class="flex items-center justify-between border-b border-pink-200 pb-4">
+                            <h3 class="font-bold text-lg text-sagAccent flex items-center gap-2">
+                                <i class="fa-solid fa-comments"></i> Reader Thoughts & Comments
+                            </h3>
+                            <button id="like-btn" onclick="handleLike()" class="bg-sagHeader text-white px-4 py-2 rounded-full text-xs font-bold y2k-shadow-sm flex items-center gap-2 hover:scale-105 transition-all">
+                                <i class="fa-solid fa-heart"></i> <span id="like-count">0</span> Likes
+                            </button>
+                        </div>
+
+                        <!-- Add Comment Form -->
+                        <form onsubmit="postComment(event)" class="space-y-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="text" id="comment-author" placeholder="Your Name / Handle" required 
+                                    class="bg-white border-2 border-pink-300 text-sagDark placeholder-gray-400 px-4 py-2 rounded-xl text-xs focus:outline-none focus:border-sagHeader">
+                            </div>
+                            <textarea id="comment-content" placeholder="Leave a sweet note..." rows="3" required
+                                class="w-full bg-white border-2 border-pink-300 text-sagDark placeholder-gray-400 p-3 rounded-xl text-xs focus:outline-none focus:border-sagHeader resize-none"></textarea>
+                            <button type="submit" class="bg-sagAccent text-white px-5 py-2 rounded-xl text-xs font-bold y2k-shadow-sm hover:bg-pink-900 transition-all">
+                                Post Comment ✨
+                            </button>
+                        </form>
+
+                        <!-- Comments List Container -->
+                        <div id="comments-list" class="space-y-3 pt-2">
+                            <p class="text-xs text-gray-500 italic">Loading comments...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="bg-sagDark border-t-4 border-sagAccent py-8 px-4 text-center mt-auto">
+            <div class="max-w-4xl mx-auto space-y-3">
+                <p class="font-bold text-yellow-200 text-sm tracking-wide">
+                    I'M A SAG. • FORMERLY GIFTED CHILD ✨
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script Application Logic -->
+    <script>
+        // ==========================================
+        // PASTE YOUR SUPABASE CREDENTIALS HERE
+        // ==========================================
+        const SUPABASE_URL = 'https://erfvnuwaefkzopgnqhnq.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_ImRfcXmiHZQJVyMegoxglg_r8Blqrnn';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let searchQuery = '';
+        let currentFilter = 'latest';
+        let isGridView = false;
+        let isLipstickActive = false;
+        let lipstickColor = '#dc143c';
+        let isDrawing = false;
+        let canvas = null;
+        let ctx = null;
+        let activeArticleId = null;
+
+        // ==========================================
+        // EDIT YOUR ARTICLES HERE OR DELETE THEM
+        // ==========================================
+        let articlesData = [
+            {
+                id: 'article-1',
+                title: "Why Being a Sagittarius Means You're Never Truly Lost",
+                snippet: "A deep dive into why we overshare, wander endlessly, and always find our way back to ourselves.",
+                date: "Oct 24",
+                image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80",
+                isSaved: false,
+                content: "Being a Sagittarius isn't just an astrological sign—it's a full lifestyle experience. We roam, we question, and most importantly, we tell the truth even when it's uncomfortable.\n\nGrowing up as a 'gifted child' comes with a very specific burden: the expectation that you already have life figured out. But the real magic happens when you let go of perfectionism and lean into pure curiosity."
+            },
+            {
+                id: 'article-2',
+                title: "Unlearning the Gifted Child Syndrome",
+                snippet: "How to stop seeking validation and start living for the chaos and beauty of right now.",
+                date: "Oct 18",
+                image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+                isSaved: true,
+                content: "When everyone spent your childhood telling you how 'smart' you were, failure starts feeling like an existential threat. Here is how I am romanticizing my mistakes and embracing being a beginner again."
+            }
+        ];
+
+        let thoughtsData = [
+            {
+                id: 1,
+                text: "Romanticizing my afternoon coffee because small rituals keep us sane ☕✨",
+                author: "Formerly Gifted Child",
+                date: "Today"
+            },
+            {
+                id: 2,
+                text: "Current mood: listening to 2000s pop nostalgia on loop 🎧",
+                author: "Formerly Gifted Child",
+                date: "Yesterday"
+            }
+        ];
+
+        function triggerGlitterPortal(callback) {
+            const overlay = document.getElementById('glitter-overlay');
+            if (!overlay) { if (callback) callback(); return; }
+            overlay.classList.add('active');
+            setTimeout(() => {
+                if (callback) callback();
+                setTimeout(() => { overlay.classList.remove('active'); }, 200);
+            }, 300);
+        }
+
+        function showNotification(title, msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => { toast.classList.add('translate-x-full'); }, 4500);
+        }
+
+        function toggleLipstickMenu() {
+            document.getElementById('lipstick-menu').classList.toggle('hidden');
+        }
+
+        const trailEmojis = ['✨', '⭐', '💖', '💫', '💅', '🎀', '🌸'];
+        let lastTrailTime = 0;
+        document.addEventListener('mousemove', (e) => {
+            const now = Date.now();
+            if (now - lastTrailTime > 60) {
+                lastTrailTime = now;
+                const el = document.createElement('div');
+                el.className = 'cursor-trail-emoji';
+                el.innerText = trailEmojis[Math.floor(Math.random() * trailEmojis.length)];
+                el.style.left = `${e.clientX}px`;
+                el.style.top = `${e.clientY}px`;
+                document.body.appendChild(el);
+                setTimeout(() => el.remove(), 850);
+            }
+        });
+
+        function toggleLayoutView() {
+            isGridView = !isGridView;
+            const icon = document.getElementById('layout-icon');
+            const text = document.getElementById('layout-text');
+            if (isGridView) {
+                icon.className = "fa-solid fa-list"; text.innerText = "List View";
+            } else {
+                icon.className = "fa-solid fa-border-all"; text.innerText = "Grid View";
+            }
+            renderArticles();
+        }
+
+        function switchTab(tabName) {
+            const homeView = document.getElementById('home-view');
+            const thoughtsView = document.getElementById('thoughts-view');
+            const detailView = document.getElementById('detail-view');
+            const blogsBtn = document.getElementById('nav-blogs-btn');
+            const thoughtsBtn = document.getElementById('nav-thoughts-btn');
+
+            detailView.classList.add('hidden');
+            if (tabName === 'blogs') {
+                homeView.classList.remove('hidden'); thoughtsView.classList.add('hidden');
+                blogsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
+                thoughtsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+            } else if (tabName === 'thoughts') {
+                homeView.classList.add('hidden'); thoughtsView.classList.remove('hidden');
+                thoughtsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
+                blogsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderArticles() {
+            const container = document.getElementById('articles-container');
+            container.innerHTML = '';
+            container.className = isGridView ? "grid grid-cols-1 md:grid-cols-2 gap-6" : "space-y-6";
+
+            let filtered = articlesData.filter(a => 
+                a.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                a.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                a.snippet.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            if (currentFilter === 'saved') filtered = filtered.filter(a => a.isSaved);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div class="glossy-card p-8 rounded-3xl text-center text-sagDark y2k-shadow col-span-full"><p class="font-bold text-lg">No articles match your search! ✨</p></div>`;
+                return;
+            }
+
+            filtered.forEach(article => {
+                const card = document.createElement('div');
+                card.className = "glossy-card p-6 rounded-3xl text-sagDark y2k-shadow hover:-translate-y-1 transition-all space-y-4 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
+                            <span>${article.date}</span>
+                            <button onclick="toggleBookmark('${article.id}')" class="hover:scale-125 transition-transform text-sagAccent">
+                                <i class="${article.isSaved ? 'fa-solid' : 'fa-regular'} fa-bookmark text-base"></i>
+                            </button>
+                        </div>
+                        <div onclick="openArticleDetail('${article.id}')" class="cursor-pointer space-y-2 group">
+                            <h2 class="font-editorial text-xl md:text-2xl font-bold text-sagDark group-hover:text-sagHeader transition-colors">${article.title}</h2>
+                            <p class="text-xs text-gray-700 leading-relaxed font-normal">${article.snippet}</p>
+                        </div>
+                        ${article.image ? `<div onclick="openArticleDetail('${article.id}')" class="cursor-pointer overflow-hidden rounded-2xl border-2 border-pink-200"><img src="${article.image}" class="w-full h-44 object-cover hover:scale-105 transition-transform duration-500"></div>` : ''}
+                    </div>
+                    <div class="flex items-center justify-end pt-3 border-t border-pink-100 text-xs font-bold mt-2">
+                        <button onclick="openArticleDetail('${article.id}')" class="bg-sagHeader text-white px-4 py-1.5 rounded-full text-xs font-bold y2k-shadow-sm hover:brightness-110">Read ✨</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderThoughts() {
+            const container = document.getElementById('thoughts-container');
+            container.innerHTML = '';
+            thoughtsData.forEach(t => {
+                const card = document.createElement('div');
+                card.className = "glossy-card p-5 rounded-3xl text-sagDark y2k-shadow space-y-3 flex flex-col justify-between";
+                card.innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center text-[11px] font-bold text-sagAccent">
+                            <span>${t.author}</span><span>${t.date}</span>
+                        </div>
+                        <p class="text-xs md:text-sm font-semibold leading-relaxed text-gray-800">"${t.text}"</p>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function openArticleDetail(id) {
+            triggerGlitterPortal(async () => {
+                const article = articlesData.find(a => a.id === id);
+                if (!article) return;
+                activeArticleId = id;
+
+                document.getElementById('home-view').classList.add('hidden');
+                document.getElementById('thoughts-view').classList.add('hidden');
+                document.getElementById('detail-view').classList.remove('hidden');
+
+                document.getElementById('active-article').innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
+                            <span>${article.date}</span>
+                            <span class="bg-pink-100 text-sagAccent px-3 py-1 rounded-full border border-pink-200">Dispatch</span>
+                        </div>
+                        <h1 class="font-editorial text-3xl md:text-5xl font-bold text-sagDark leading-tight">${article.title}</h1>
+                    </div>
+                    ${article.image ? `<img src="${article.image}" class="w-full max-h-96 object-cover rounded-2xl border-2 border-pink-200 shadow-sm my-4">` : ''}
+                    <div class="text-sm md:text-base text-gray-800 leading-relaxed space-y-4 font-sans pt-4 whitespace-pre-line">${article.content}</div>
+                `;
+
+                await fetchLikes();
+                await fetchComments();
+                setTimeout(initLipstickCanvas, 150);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        function showHome() {
+            document.getElementById('home-view').classList.remove('hidden');
+            document.getElementById('thoughts-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['latest', 'popular', 'saved'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if(btn) {
+                    btn.className = (f === filter) ? "bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm" : "bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark";
+                }
+            });
+            renderArticles();
+        }
+
+        function handleSearch(val) { searchQuery = val; renderArticles(); }
+
+        function toggleBookmark(id) {
+            const article = articlesData.find(a => a.id === id);
+            if (article) {
+                article.isSaved = !article.isSaved;
+                showNotification(article.isSaved ? "Saved! 🔖" : "Unsaved", article.isSaved ? "Added to saved dispatches." : "Removed.");
+                renderArticles();
+            }
+        }
+
+        // --- SUPABASE DATABASE FUNCTIONS ---
+        async function fetchLikes() {
+            try {
+                let { data, error } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
+                document.getElementById('like-count').innerText = data ? data.likes_count : 0;
+            } catch (err) {
+                document.getElementById('like-count').innerText = 0;
+            }
+        }
+
+        async function handleLike() {
+            try {
+                let { data } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
+                let newCount = data ? data.likes_count + 1 : 1;
+                
+                await supabaseClient.from('article_likes').upsert({ article_id: activeArticleId, likes_count: newCount }, { onConflict: 'article_id' });
+                document.getElementById('like-count').innerText = newCount;
+                showNotification("Liked! ❤️", "Thanks for spreading love.");
+            } catch (err) {
+                showNotification("Error", "Could not record like.");
+            }
+        }
+
+        async function fetchComments() {
+            const listContainer = document.getElementById('comments-list');
+            listContainer.innerHTML = '<p class="text-xs text-gray-500 italic">Loading comments...</p>';
+
+            try {
+                let { data, error } = await supabaseClient.from('article_comments').select('*').eq('article_id', activeArticleId).order('created_at', { ascending: false });
+                
+                if (!data || data.length === 0) {
+                    listContainer.innerHTML = '<p class="text-xs text-gray-500 italic">No comments yet. Be the first to leave one! ✨</p>';
+                    return;
+                }
+
+                listContainer.innerHTML = '';
+                data.forEach(c => {
+                    const item = document.createElement('div');
+                    item.className = "bg-white border-2 border-pink-200 p-3 rounded-2xl text-xs space-y-1 relative shadow-sm";
+                    item.innerHTML = `
+                        <div class="flex justify-between items-center font-bold text-sagAccent">
+                            <span>${escapeHtml(c.author)}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] text-gray-400 font-normal">${new Date(c.created_at).toLocaleDateString()}</span>
+                                <button onclick="deleteComment(${c.id})" class="text-red-400 hover:text-red-600 transition-colors" title="Delete Comment">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-800 leading-relaxed pt-1">${escapeHtml(c.content)}</p>
+                    `;
+                    listContainer.appendChild(item);
+                });
+            } catch (err) {
+                listContainer.innerHTML = '<p class="text-xs text-red-500">Failed to load comments.</p>';
+            }
+        }
+
+        async function postComment(e) {
+            e.preventDefault();
+            const author = document.getElementById('comment-author').value.trim();
+            const content = document.getElementById('comment-content').value.trim();
+
+            if (!author || !content) return;
+
+            try {
+                const { error } = await supabaseClient.from('article_comments').insert([{ article_id: activeArticleId, author, content }]);
+                if (error) throw error;
+
+                document.getElementById('comment-author').value = '';
+                document.getElementById('comment-content').value = '';
+                showNotification("Success! 💌", "Your comment was posted.");
+                fetchComments();
+            } catch (err) {
+                showNotification("Error", "Could not post comment.");
+            }
+        }
+
+        async function deleteComment(commentId) {
+            if (!confirm("Are you sure you want to delete this comment?")) return;
+
+            try {
+                const { error } = await supabaseClient.from('article_comments').delete().eq('id', commentId);
+                if (error) throw error;
+                showNotification("Deleted", "Comment removed.");
+                fetchComments();
+            } catch (err) {
+                showNotification("Error", "Could not delete comment.");
+            }
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Lipstick Canvas Highlighter Logic
+        function initLipstickCanvas() {
+            canvas = document.getElementById('lipstick-canvas');
+            if (!canvas) return;
+            const card = document.getElementById('article-detail-card');
+            canvas.width = card.clientWidth;
+            canvas.height = card.clientHeight;
+            ctx = canvas.getContext('2d');
+            
+            ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipstickColor; ctx.globalAlpha = 0.35;
+            canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
+
+            let lastX = 0, lastY = 0;
+            function startDraw(x, y) {
+                if (!isLipstickActive) return;
+                isDrawing = true;
+                const rect = canvas.getBoundingClientRect();
+                lastX = x - rect.left; lastY = y - rect.top;
+            }
+            function moveDraw(x, y) {
+                if (!isDrawing || !isLipstickActive) return;
+                const rect = canvas.getBoundingClientRect();
+                const currentX = x - rect.left; const currentY = y - rect.top;
+                ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(currentX, currentY); ctx.stroke();
+                lastX = currentX; lastY = currentY;
+            }
+
+            canvas.onmousedown = (e) => startDraw(e.clientX, e.clientY);
+            canvas.onmousemove = (e) => moveDraw(e.clientX, e.clientY);
+            canvas.onmouseup = () => isDrawing = false;
+            canvas.onmouseleave = () => isDrawing = false;
+
+            canvas.ontouchstart = (e) => { if (e.touches.length === 1) startDraw(e.touches[0].clientX, e.touches[0].clientY); };
+            canvas.ontouchmove = (e) => { if (e.touches.length === 1) { moveDraw(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } };
+            canvas.ontouchend = () => isDrawing = false;
+        }
+
+        function toggleLipstickTool() {
+            isLipstickActive = !isLipstickActive;
+            const modeBtn = document.getElementById('lipstick-mode-btn');
+            const card = document.getElementById('article-detail-card');
+            if (isLipstickActive) {
+                modeBtn.className = "w-full bg-sagHeader text-white border border-pink-400 py-1.5 px-2 rounded-xl text-[11px] font-bold shadow-sm";
+                modeBtn.innerText = "Highlighter Active 💄";
+                card.classList.add('lipstick-mode-active');
+            } else {
+                modeBtn.className = "w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200";
+                modeBtn.innerText = "Start Highlighting 💄";
+                card.classList.remove('lipstick-mode-active');
+            }
+            if (canvas) canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
+        }
+
+        function setLipstickColor(color) {
+            lipstickColor = color;
+            if (ctx) ctx.strokeStyle = lipstickColor;
+            showNotification("Shade Selected ✨", "Highlighting in new shade.");
+        }
+
+        function clearLipstickDrawings() {
+            if (ctx && canvas) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                showNotification("Marks Cleared", "Highlighter canvas reset.");
+            }
+        }
+
+        window.onload = function() {
+            renderArticles();
+            renderThoughts();
+        };
+    </script>
+</body>
+</html>
