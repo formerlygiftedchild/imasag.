@@ -183,24 +183,6 @@
                     <button onclick="showHome()" class="bg-sagAccent text-white px-4 py-2 rounded-xl text-sm font-bold y2k-shadow-sm hover:bg-pink-900 transition-all inline-flex items-center gap-2">
                         <i class="fa-solid fa-arrow-left"></i> Back to Dispatches
                     </button>
-
-                    <div class="relative">
-                        <button id="lipstick-toggle-btn" onclick="toggleLipstickMenu()" class="bg-white text-sagAccent border-2 border-pink-300 p-2.5 rounded-full font-bold text-xs hover:scale-110 transition-all shadow-md flex items-center gap-1.5" title="Lipstick Highlighter">
-                            <span class="text-base">💄</span>
-                        </button>
-                        <div id="lipstick-menu" class="hidden absolute right-0 mt-2 bg-white border-2 border-pink-300 p-3 rounded-2xl shadow-xl z-30 space-y-2.5 w-48">
-                            <div class="text-[10px] font-bold text-sagAccent uppercase tracking-wider text-center">Lipstick Shade</div>
-                            <div class="flex items-center justify-center gap-2">
-                                <button onclick="setLipstickColor('#dc143c')" class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                                <button onclick="setLipstickColor('#ff1493')" class="w-6 h-6 rounded-full bg-pink-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                                <button onclick="setLipstickColor('#ff4500')" class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow hover:scale-125 transition-transform"></button>
-                            </div>
-                            <button onclick="toggleLipstickTool()" id="lipstick-mode-btn" class="w-full bg-pink-100 text-sagAccent border border-pink-300 py-1.5 px-2 rounded-xl text-[11px] font-bold hover:bg-pink-200">
-                                Start Highlighting 💄
-                            </button>
-                            <button onclick="clearLipstickDrawings()" class="w-full text-[10px] font-bold text-gray-500 underline text-center block hover:text-sagHeader">Clear Marks</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="space-y-6">
@@ -258,8 +240,7 @@
         // ==========================================
         const SUPABASE_URL = 'https://erfvnuwaefkzopgnqhnq.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_ImRfcXmiHZQJVyMegoxglg_r8Blqrnn';
-
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let searchQuery = '';
         let currentFilter = 'latest';
@@ -271,10 +252,9 @@
         let ctx = null;
         let activeArticleId = null;
 
-   // ==========================================
-        // EDIT YOUR ARTICLES HERE OR DELETE THEM
-        // ==========================================
+        // Private device bookmarks stored in localStorage
         let savedBookmarks = JSON.parse(localStorage.getItem('sag_bookmarks') || '{}');
+        let articleLikesMap = {};
 
         let articlesData = [
             {
@@ -296,22 +276,9 @@
         ];
 
         let thoughtsData = [
-            {
-                id: 1,
-                text: "Romanticizing my afternoon coffee because small rituals keep us sane ☕✨",
-                author: "Formerly Gifted Child",
-                date: "Today"
-            },
-            {
-                id: 2,
-                text: "Current mood: listening to 2000s pop nostalgia on loop 🎧",
-                author: "Formerly Gifted Child",
-                date: "Yesterday"
-            }
+            { id: 1, text: "Romanticizing my afternoon coffee because small rituals keep us sane ☕✨", author: "Formerly Gifted Child", date: "Today" },
+            { id: 2, text: "Current mood: listening to 2000s pop nostalgia on loop 🎧", author: "Formerly Gifted Child", date: "Yesterday" }
         ];
-
-        // Store fetched like counts globally so Popular sorting works instantly
-        let articleLikesMap = {};
 
         function isArticleSaved(id) {
             return !!savedBookmarks[id];
@@ -334,10 +301,6 @@
             document.getElementById('toast-msg').innerText = msg;
             toast.classList.remove('translate-x-full');
             setTimeout(() => { toast.classList.add('translate-x-full'); }, 4500);
-        }
-
-        function toggleLipstickMenu() {
-            document.getElementById('lipstick-menu').classList.toggle('hidden');
         }
 
         const trailEmojis = ['✨', '⭐', '💖', '💫', '💅', '🎀', '🌸'];
@@ -376,6 +339,9 @@
             const thoughtsBtn = document.getElementById('nav-thoughts-btn');
 
             detailView.classList.add('hidden');
+            const floatingBtn = document.getElementById('floating-lipstick-btn');
+            if (floatingBtn) floatingBtn.remove();
+
             if (tabName === 'blogs') {
                 homeView.classList.remove('hidden'); thoughtsView.classList.add('hidden');
                 blogsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
@@ -384,8 +350,31 @@
                 homeView.classList.add('hidden'); thoughtsView.classList.remove('hidden');
                 thoughtsBtn.className = "bg-white text-sagAccent font-bold px-4 py-2 rounded-full y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5 shadow-md";
                 blogsBtn.className = "bg-sagDark/70 text-yellow-200 font-bold px-4 py-2 rounded-full border border-yellow-300/40 y2k-shadow-sm hover:scale-105 transition-all text-xs flex items-center gap-1.5";
+                renderThoughts();
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            ['latest', 'popular', 'saved'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if(btn) {
+                    btn.className = (f === filter) ? "bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm" : "bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark";
+                }
+            });
+            renderArticles();
+        }
+
+        function handleSearch(val) { searchQuery = val; renderArticles(); }
+
+        function toggleBookmark(id) {
+            savedBookmarks[id] = !savedBookmarks[id];
+            localStorage.setItem('sag_bookmarks', JSON.stringify(savedBookmarks));
+            
+            const isNowSaved = savedBookmarks[id];
+            showNotification(isNowSaved ? "Saved! 🔖" : "Unsaved", isNowSaved ? "Added to your private saves." : "Removed from your saves.");
+            renderArticles();
         }
 
         function renderArticles() {
@@ -403,12 +392,11 @@
             if (currentFilter === 'saved') {
                 filtered = filtered.filter(a => isArticleSaved(a.id));
             } else if (currentFilter === 'popular') {
-                // Sort articles so the one with the highest likes comes first
                 filtered.sort((a, b) => (articleLikesMap[b.id] || 0) - (articleLikesMap[a.id] || 0));
             }
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="glossy-card p-8 rounded-3xl text-center text-sagDark y2k-shadow col-span-full"><p class="font-bold text-lg">No articles match your search! ✨</p></div>`;
+                container.innerHTML = `<div class="glossy-card p-8 rounded-3xl text-center text-sagDark y2k-shadow col-span-full"><p class="font-bold text-lg">No articles match your filter! ✨</p></div>`;
                 return;
             }
 
@@ -466,12 +454,15 @@
                 document.getElementById('thoughts-view').classList.add('hidden');
                 document.getElementById('detail-view').classList.remove('hidden');
 
-                document.getElementById('active-article').innerHTML = `
-                    <!-- FLOATING HIGHLIGHTER TOGGLE (Stays fixed in top-right while scrolling) -->
-                    <button onclick="toggleLipstickTool()" id="lipstick-mode-btn" class="fixed top-24 right-4 z-50 bg-pink-100 text-sagAccent border-2 border-pink-300 py-2 px-3 rounded-full text-xs font-bold shadow-xl hover:bg-pink-200 flex items-center gap-1.5">
-                        <i class="fa-solid fa-paintbrush"></i> <span id="lipstick-btn-text">Highlight 💄</span>
+                // Floating highlighter button in top-right corner for mobile scroll freedom
+                const floatingBtnHtml = `
+                    <button id="floating-lipstick-btn" onclick="toggleLipstickTool()" class="fixed top-20 right-4 z-50 bg-white border-2 border-pink-400 text-sagAccent px-3.5 py-2 rounded-full font-bold text-xs shadow-xl hover:scale-105 transition-all flex items-center gap-1.5">
+                        <span class="text-base">💄</span> <span id="floating-btn-text">Highlight</span>
                     </button>
+                `;
+                document.body.insertAdjacentHTML('beforeend', floatingBtnHtml);
 
+                document.getElementById('active-article').innerHTML = `
                     <div class="space-y-3">
                         <div class="flex items-center justify-between text-xs text-sagAccent font-bold">
                             <span>${article.date}</span>
@@ -491,8 +482,7 @@
         }
 
         function showHome() {
-            // Remove floating highlighter button when leaving detail view
-            const floatingBtn = document.getElementById('lipstick-mode-btn');
+            const floatingBtn = document.getElementById('floating-lipstick-btn');
             if (floatingBtn) floatingBtn.remove();
 
             document.getElementById('home-view').classList.remove('hidden');
@@ -501,34 +491,12 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function setFilter(filter) {
-            currentFilter = filter;
-            ['latest', 'popular', 'saved'].forEach(f => {
-                const btn = document.getElementById(`filter-${f}`);
-                if(btn) {
-                    btn.className = (f === filter) ? "bg-yellow-300 text-sagDark px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap y2k-shadow-sm" : "bg-sagDark/60 text-white border border-pink-300/30 px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap hover:bg-sagDark";
-                }
-            });
-            renderArticles();
-        }
-
-        function handleSearch(val) { searchQuery = val; renderArticles(); }
-
-        function toggleBookmark(id) {
-            savedBookmarks[id] = !savedBookmarks[id];
-            localStorage.setItem('sag_bookmarks', JSON.stringify(savedBookmarks));
-            
-            const isNowSaved = savedBookmarks[id];
-            showNotification(isNowSaved ? "Saved! 🔖" : "Unsaved", isNowSaved ? "Added to your private saves." : "Removed from your saves.");
-            renderArticles();
-        }
-
-        // --- SUPABASE DATABASE FUNCTIONS ---
+        // --- SUPABASE LIKES & COMMENTS ---
         async function fetchLikes() {
             try {
                 let { data } = await supabaseClient.from('article_likes').select('likes_count').eq('article_id', activeArticleId).single();
                 const countVal = data ? data.likes_count : 0;
-                articleLikesMap[activeArticleId] = countVal; // Store for Popular sorting
+                articleLikesMap[activeArticleId] = countVal;
                 
                 const countEl = document.getElementById('like-count');
                 if(countEl) countEl.innerText = countVal;
@@ -641,7 +609,7 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Lipstick Canvas Highlighter Logic (with Floating Button & Scroll Freedom)
+        // --- HIGHLIGHTER CANVAS (With Mobile Scroll Freedom) ---
         function initLipstickCanvas() {
             canvas = document.getElementById('lipstick-canvas');
             if (!canvas) return;
@@ -651,7 +619,7 @@
             ctx = canvas.getContext('2d');
             
             ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = lipstickColor; ctx.globalAlpha = 0.35;
-            canvas.style.pointerEvents = 'none'; // Default to scrollable
+            canvas.style.pointerEvents = 'none'; // Keep scrollable by default
 
             let lastX = 0, lastY = 0;
             function startDraw(x, y) {
@@ -680,17 +648,17 @@
 
         function toggleLipstickTool() {
             isLipstickActive = !isLipstickActive;
-            const btnText = document.getElementById('lipstick-btn-text');
-            const modeBtn = document.getElementById('lipstick-mode-btn');
+            const floatingBtnText = document.getElementById('floating-btn-text');
+            const floatingBtn = document.getElementById('floating-lipstick-btn');
             const card = document.getElementById('article-detail-card');
 
             if (isLipstickActive) {
-                if(btnText) btnText.innerText = "Drawing Active 🖍️";
-                if(modeBtn) modeBtn.className = "fixed top-24 right-4 z-50 bg-sagHeader text-white border-2 border-pink-400 py-2 px-3 rounded-full text-xs font-bold shadow-xl flex items-center gap-1.5";
+                if(floatingBtnText) floatingBtnText.innerText = "Drawing Active 🖍️";
+                if(floatingBtn) floatingBtn.className = "fixed top-20 right-4 z-50 bg-sagHeader text-white border-2 border-pink-300 px-3.5 py-2 rounded-full font-bold text-xs shadow-xl flex items-center gap-1.5";
                 if(card) card.classList.add('lipstick-mode-active');
             } else {
-                if(btnText) btnText.innerText = "Highlight 💄";
-                if(modeBtn) modeBtn.className = "fixed top-24 right-4 z-50 bg-pink-100 text-sagAccent border-2 border-pink-300 py-2 px-3 rounded-full text-xs font-bold shadow-xl hover:bg-pink-200 flex items-center gap-1.5";
+                if(floatingBtnText) floatingBtnText.innerText = "Highlight 💄";
+                if(floatingBtn) floatingBtn.className = "fixed top-20 right-4 z-50 bg-white border-2 border-pink-400 text-sagAccent px-3.5 py-2 rounded-full font-bold text-xs shadow-xl hover:scale-105 transition-all flex items-center gap-1.5";
                 if(card) card.classList.remove('lipstick-mode-active');
             }
             if (canvas) canvas.style.pointerEvents = isLipstickActive ? 'auto' : 'none';
@@ -713,6 +681,6 @@
             renderArticles();
             renderThoughts();
         };
-     </script>
+    </script>
 </body>
 </html>
